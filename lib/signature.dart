@@ -177,6 +177,7 @@ class _SignaturePadState extends State<SignaturePad> {
                   onPressed: () {
                     setState(() {
                       newColor = selectedColor;
+                      erasePoint();
                     });
                     Navigator.pop(context);
                   },
