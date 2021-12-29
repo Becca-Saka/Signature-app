@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:ui' as ui;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:signature_app/painter.dart';
@@ -102,21 +103,68 @@ class _MyHomePageState extends State<MyHomePage> {
     showImage();
   }
 
-  void showImage() async {
-    final directoryName = 'Signature App';
-    DateTime dateTime = DateTime.now();
-    var pngBytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    if (!(await checkPermission())) await requestPermision();
-    String path = '/storage/emulated/0/$directoryName';
-    final dir = Directory(path);
-    if (!dir.existsSync()) {
-      await dir.create(recursive: true);
+  Future<bool> _requestPermission(Permission permission) async {
+    if (await permission.isGranted) {
+      return true;
+    } else {
+      var result = await permission.request();
+      if (result == PermissionStatus.granted) {
+        return true;
+      }
     }
-    final String filePath = '$path/Sig${dateTime.microsecond}.png';
-    print(filePath);
-    File(filePath).writeAsBytesSync(pngBytes.buffer.asInt8List());
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('Image Saved')));
+    return false;
+  }
+
+  void showImage() async {
+    Directory directory;
+    if (Platform.isAndroid) {
+      if (await _requestPermission(Permission.storage) &&
+          // access media location needed for android 10/Q
+          await _requestPermission(Permission.accessMediaLocation) &&
+          // manage external storage needed for android 11/R
+          await _requestPermission(Permission.manageExternalStorage)) {
+        directory = await getExternalStorageDirectory();
+        String newPath = "";
+        print(directory);
+        List<String> paths = directory.path.split("/");
+        for (int x = 1; x < paths.length; x++) {
+          String folder = paths[x];
+          if (folder != "Android") {
+            newPath += "/" + folder;
+          } else {
+            break;
+          }
+        }
+        newPath = newPath + "/Signature App";
+        directory = Directory(newPath);
+        if (!directory.existsSync()) {
+          await directory.create(recursive: true);
+        }
+        DateTime dateTime = DateTime.now();
+        final String filePath = '$newPath/Sig${dateTime.microsecond}.png';
+
+        var pngBytes = await image.toByteData(format: ui.ImageByteFormat.png);
+        print(filePath);
+        File(filePath).writeAsBytesSync(pngBytes.buffer.asInt8List());
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Image Saved')));
+      }
+    }
+    print(directory);
+    // final directoryName = 'Signature App';
+    // DateTime dateTime = DateTime.now();
+    // var pngBytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    // if (!(await checkPermission())) await requestPermision();
+    // String path = '/storage/emulated/0/$directoryName';
+    // final dir = Directory(path);
+    // if (!dir.existsSync()) {
+    //   await dir.create(recursive: true);
+    // }
+    // final String filePath = '$path/Sig${dateTime.microsecond}.png';
+    // print(filePath);
+    // File(filePath).writeAsBytesSync(pngBytes.buffer.asInt8List());
+    // ScaffoldMessenger.of(context)
+    //     .showSnackBar(SnackBar(content: Text('Image Saved')));
   }
 }
 
