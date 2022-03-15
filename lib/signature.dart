@@ -13,8 +13,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  GlobalKey<_SignaturePadState> signatureKey;
-  var image;
+  GlobalKey<_SignaturePadState>? signatureKey;
+  late var image;
   Color newColor = Colors.black;
 
   @override
@@ -58,18 +58,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: [
                   ElevatedButton(
                     onPressed: () {
-                      signatureKey.currentState.increaseBrush();
+                      signatureKey!.currentState!.increaseBrush();
                     },
                     child: Icon(Icons.brush_sharp),
                   ),
                   ElevatedButton(
                       onPressed: () {
-                        signatureKey.currentState.changeColor();
+                        signatureKey!.currentState!.changeColor();
                       },
                       child: Icon(Icons.color_lens)),
                   ElevatedButton(
                       onPressed: () {
-                        signatureKey.currentState.erasePoint();
+                        signatureKey!.currentState!.erasePoint();
                       },
                       child: Icon(Icons.clear)),
                   ElevatedButton(
@@ -94,7 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   setRenderedImage(BuildContext context) async {
-    ui.Image renderedImage = await signatureKey.currentState.rendered;
+    ui.Image renderedImage = await signatureKey!.currentState!.rendered;
 
     setState(() {
       image = renderedImage;
@@ -116,7 +116,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void showImage() async {
-    Directory directory;
+    Directory? directory;
     if (Platform.isAndroid) {
       if (await _requestPermission(Permission.storage) &&
           // access media location needed for android 10/Q
@@ -126,7 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
         directory = await getExternalStorageDirectory();
         String newPath = "";
         print(directory);
-        List<String> paths = directory.path.split("/");
+        List<String> paths = directory!.path.split("/");
         for (int x = 1; x < paths.length; x++) {
           String folder = paths[x];
           if (folder != "Android") {
@@ -169,14 +169,14 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class SignaturePad extends StatefulWidget {
-  SignaturePad({Key key}) : super(key: key);
+  SignaturePad({Key? key}) : super(key: key);
 
   @override
   _SignaturePadState createState() => _SignaturePadState();
 }
 
 class _SignaturePadState extends State<SignaturePad> {
-  List<Offset> _points = <Offset>[];
+  List<Offset?> _points = <Offset?>[];
   double width = 3;
   Color newColor = Colors.black;
 
@@ -185,7 +185,7 @@ class _SignaturePadState extends State<SignaturePad> {
     Canvas canvas = Canvas(recorder);
     SignatureCanva signature =
         SignatureCanva(points: _points, width: width, color: newColor);
-    var size = context.size;
+    var size = context.size!;
     signature.paint(canvas, size);
     return recorder
         .endRecording()
@@ -242,7 +242,7 @@ class _SignaturePadState extends State<SignaturePad> {
             child: GestureDetector(
       onPanUpdate: (DragUpdateDetails details) {
         setState(() {
-          RenderBox object = context.findRenderObject();
+          RenderBox object = context.findRenderObject() as RenderBox;
           Offset _localPosition = object.globalToLocal(details.globalPosition);
           _points = new List.from(_points)..add(_localPosition);
         });
